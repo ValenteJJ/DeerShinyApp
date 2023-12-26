@@ -71,3 +71,7 @@ forestNon = classify(croppedNLCD, rcl=reclassifyValues)
 
 #Now we can look at the distribution of forest (1 values) in the county
 plot(forestNon)
+
+
+
+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
