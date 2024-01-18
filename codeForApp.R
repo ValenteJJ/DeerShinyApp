@@ -1,4 +1,6 @@
 
+rm(list=ls())
+
 library(raster)
 library(sf)
 library(rgdal)
@@ -6,6 +8,8 @@ library(terra)
 library(FedData)
 library(tidyverse)
 library(tigris)
+
+
 
 #Create a dropdown menu where you select the state
 stateName = 'AL'
@@ -71,6 +75,23 @@ forestNon = classify(croppedNLCD, rcl=reclassifyValues)
 
 #Now we can look at the distribution of forest (1 values) in the county
 plot(forestNon)
+
+
+#increase the grain and calculate the mean
+aggForest <- aggregate(forestNon, fact=53, fun='mean')
+
+#Is there a specific projection that you need this in?
+crs(aggForest, proj=T)
+
+plot(aggForest)
+
+#Somehow you'll need folks to set the filename for where to output the ascii
+#It should specify the file path and then end with asciiFileName.asc
+fileName = NA
+
+#You should probably double-check to make sure this output works in your system before we go too far.
+writeRaster(aggForest, filename=fileName, format='ascii', overwrite=TRUE)
+
 
 
 #What else do we need to add in here?
