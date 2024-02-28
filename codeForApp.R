@@ -1,9 +1,9 @@
 
 rm(list=ls())
 
-library(raster)
+# library(raster)
 library(sf)
-library(rgdal)
+# library(rgdal)
 library(terra)
 library(FedData)
 library(tidyverse)
@@ -26,7 +26,8 @@ countyShape = counties(state = stateName, cb = FALSE, year = yearNum)
 countyShape$NAME
 countyName = 'Lee'
 
-countyOfInterest = countyShape[which(countyShape$NAME==countyName),]
+countyOfInterest = countyShape %>% filter(NAME==countyName)
+# countyOfInterest = countyShape[which(countyShape$NAME==countyName),]
 
 #Can now plot the county
 ggplot()+
@@ -58,12 +59,12 @@ croppedNLCD = get_nlcd(countyOfInterest,
 )
 
 #Reproject the county so it is the same as the NLCD data
-countyShape = as_Spatial(countyShape)
-countyShape = spTransform(countyShape, crs(croppedNLCD))
+# countyShape = as_Spatial(countyShape)
+countyShape = st_transform(countyOfInterest, crs(croppedNLCD))
 
 #Now we can plot it for funsies
 plot(croppedNLCD)
-plot(countyShape, add=T, lwd=5)
+plot(st_geometry(countyShape), add=T, lwd=5)
 
 
 #Now we can reclassify the NLCD raster so that all forest has a value
@@ -72,6 +73,7 @@ reclassifyValues = matrix(c(1, 39, 0,
                             40, 49, 1,
                             50, 100, 0), nrow=3, ncol=3, byrow=T)
 forestNon = classify(croppedNLCD, rcl=reclassifyValues)
+forestNon = mask(forestNon, countyShape)
 
 #Now we can look at the distribution of forest (1 values) in the county
 plot(forestNon)
@@ -82,8 +84,9 @@ aggForest <- aggregate(forestNon, fact=53, fun='mean')
 
 #Is there a specific projection that you need this in?
 crs(aggForest, proj=T)
-
+aggForest = mask(aggForest, countyShape)
 plot(aggForest)
+
 
 #Somehow you'll need folks to set the filename for where to output the ascii
 #It should specify the file path and then end with asciiFileName.asc
