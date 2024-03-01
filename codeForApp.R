@@ -47,24 +47,31 @@ landMass = 'L48'
 #Set the directory where you want the nlcd data stored
 directoryForStorage = getwd()
 
+#Buffer the county by 1 km
+countyBuffer = st_buffer(countyOfInterest, dist=2000)
+
+
+
 #Download the nlcd data and crop to the county of interest
-croppedNLCD = get_nlcd(countyOfInterest,
+croppedNLCD = get_nlcd(countyBuffer,
                        label=countyName,
                        year = nlcdYear,
                        dataset = "landcover",
                        landmass = landMass,
                        extraction.dir = file.path(directoryForStorage, "FedData", "extractions", "nlcd"),
                        raster.options = c("COMPRESS=DEFLATE", "ZLEVEL=9"),
-                       force.redo = FALSE
+                       force.redo = TRUE
 )
 
 #Reproject the county so it is the same as the NLCD data
 # countyShape = as_Spatial(countyShape)
 countyShape = st_transform(countyOfInterest, crs(croppedNLCD))
+countyBuffer = st_transform(countyBuffer, crs(croppedNLCD))
 
 #Now we can plot it for funsies
 plot(croppedNLCD)
-plot(st_geometry(countyShape), add=T, lwd=5)
+plot(st_geometry(countyBuffer), add=T, lwd=5)
+
 
 
 #Now we can reclassify the NLCD raster so that all forest has a value
@@ -73,10 +80,12 @@ reclassifyValues = matrix(c(1, 39, 0,
                             40, 49, 1,
                             50, 100, 0), nrow=3, ncol=3, byrow=T)
 forestNon = classify(croppedNLCD, rcl=reclassifyValues)
-forestNon = mask(forestNon, countyShape)
+forestNon = mask(forestNon, countyBuffer)
 
 #Now we can look at the distribution of forest (1 values) in the county
 plot(forestNon)
+plot(st_geometry(countyShape), add=T)
+
 
 
 #increase the grain and calculate the mean
@@ -86,14 +95,15 @@ aggForest <- aggregate(forestNon, fact=53, fun='mean')
 crs(aggForest, proj=T)
 aggForest = mask(aggForest, countyShape)
 plot(aggForest)
+plot(st_geometry(countyShape), add=T)
 
 
 #Somehow you'll need folks to set the filename for where to output the ascii
 #It should specify the file path and then end with asciiFileName.asc
-fileName = NA
+fileName = 'test.asc'
 
 #You should probably double-check to make sure this output works in your system before we go too far.
-writeRaster(aggForest, filename=fileName, format='ascii', overwrite=TRUE)
+writeRaster(aggForest, filename=fileName, overwrite=TRUE)
 
 
 
