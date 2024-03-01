@@ -100,7 +100,7 @@ plot(st_geometry(countyShape), add=T)
 
 #Somehow you'll need folks to set the filename for where to output the ascii
 #It should specify the file path and then end with asciiFileName.asc
-fileName = 'test.asc'
+fileName = NA
 
 #You should probably double-check to make sure this output works in your system before we go too far.
 writeRaster(aggForest, filename=fileName, overwrite=TRUE)
